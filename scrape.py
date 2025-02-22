@@ -27,6 +27,9 @@ def scrape_website_with_sbr(website):
     """
     logging.info("Launching Chrome Browser...")
     
+    # Initialize driver as None to ensure it's always defined
+    driver = None
+    
     try:
         # Set up Chrome options
         options = webdriver.ChromeOptions()
@@ -35,8 +38,11 @@ def scrape_website_with_sbr(website):
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")  # Avoid memory issues
 
+        # Get the root directory path
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+
         # Specify the path to the ChromeDriver binary
-        chrome_driver_path = os.path.join(os.getcwd(), "bin", "chromedriver")
+        chrome_driver_path = os.path.join(root_dir, "bin", "chromedriver")
 
         # Initialize the Chrome WebDriver
         driver = webdriver.Chrome(service=Service(chrome_driver_path), options=options)
@@ -54,63 +60,6 @@ def scrape_website_with_sbr(website):
         logging.error(f"Error during scraping: {e}")
         raise
     finally:
-        # Close the browser
+        # Close the browser if driver was initialized
         if driver:
             driver.quit()
-
-def extract_body_content(html_content):
-    """
-    Extracts the body content from the HTML.
-    
-    Args:
-        html_content (str): The HTML content of the website.
-    
-    Returns:
-        str: The body content of the website.
-    """
-    soup = BeautifulSoup(html_content, "html.parser")
-    body_content = soup.body
-    if body_content:
-        return str(body_content)
-    else:
-        return "No body content found"
-
-def clean_body_content(body_content):
-    """
-    Cleans the body content by removing unnecessary tags and whitespace.
-    
-    Args:
-        body_content (str): The body content of the website.
-    
-    Returns:
-        str: The cleaned body content.
-    """
-    soup = BeautifulSoup(body_content, "html.parser")
-    
-    # Remove unnecessary tags
-    for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
-        tag.decompose()
-
-    # Extract text and clean it
-    cleaned_content = soup.get_text(separator="\n")
-    cleaned_content = "\n".join(
-        line.strip() for line in cleaned_content.splitlines() if line.strip()
-    )
-
-    return cleaned_content
-
-def split_dom_content(dom_content, chunk_size=6000):
-    """
-    Splits the DOM content into chunks of a specified size.
-    
-    Args:
-        dom_content (str): The DOM content to split.
-        chunk_size (int): The size of each chunk.
-    
-    Returns:
-        list: A list of chunks.
-    """
-    return [
-        dom_content[x : x + chunk_size]
-        for x in range(0, len(dom_content), chunk_size)
-    ]
