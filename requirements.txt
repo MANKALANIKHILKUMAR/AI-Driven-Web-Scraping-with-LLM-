@@ -7,5 +7,6 @@ lxml
 html5lib
 requests-html
 python-dotenv
+os
 
 
