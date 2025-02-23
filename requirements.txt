@@ -1,12 +1,9 @@
 streamlit
-pandas
-openai
-requests
+langchain
+langchain_ollama
+selenium
 beautifulsoup4
 lxml
 html5lib
-requests-html
 python-dotenv
-os
-
 
