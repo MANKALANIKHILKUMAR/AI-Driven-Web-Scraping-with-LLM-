@@ -1,36 +1,39 @@
-from langchain_ollama import OllamaLLM
-from langchain_core.prompts import ChatPromptTemplate
-import pandas as pd
+from openai import OpenAI
+import os
 
-template = (
-    "You are tasked with extracting specific information from the following text content: {dom_content}. "
-    "Please follow these instructions carefully: \n\n"
-    "1. **Extract Information:** Only extract the information that directly matches the provided description: {parse_description}. "
-    "2. **No Extra Content:** Do not include any additional text, comments, or explanations in your response. "
-    "3. **Empty Response:** If no information matches the description, return an empty string ('')."
-    "4. **Direct Data Only:** Your output should contain only the data that is explicitly requested, with no other text."
-)
+# Load OpenAI API key from environment variables
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-model = OllamaLLM(model="llama3.2")
-
-def parse_with_ollama(dom_chunks, parse_description):
+def parse_with_openai(dom_chunks, parse_description):
     try:
-        prompt = ChatPromptTemplate.from_template(template)
-        chain = prompt | model
         parsed_results = []
         for chunk in dom_chunks:
-            response = chain.invoke(
-                {
-                    "dom_content": chunk,
-                    "parse_description": parse_description,
-                }
+            # Create a prompt for OpenAI
+            prompt = (
+                f"Extract specific information from the following text content: {chunk}. "
+                f"Follow these instructions carefully:\n\n"
+                f"1. Extract only the information that matches this description: {parse_description}.\n"
+                f"2. Do not include any additional text, comments, or explanations.\n"
+                f"3. If no information matches, return an empty string ('')."
             )
-            parsed_results.append(response)
+
+            # Call OpenAI API
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=500,
+            )
+
+            # Append the parsed result
+            parsed_results.append(response.choices[0].message.content.strip())
         return parsed_results
     except Exception as e:
         print(f"Error during parsing: {e}")
         raise
-
 
 
 
